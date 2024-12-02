@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyroscoop Calculator</title>
+    <!-- dit gedeelte maakt niet veel uit, zorgt alleen voor een plezant plaatje -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+
+        form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        fieldset {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        legend {
+            font-weight: bold;
+            color: #333;
+        }
+
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gyroscoop Calculator</h1>
+        <form id="gyroscope-form">
+            <fieldset>
+                <legend>Basismetingen</legend>
+                <label for="density">Dichtheid van het materiaal (kg/m³):</label>
+                <input type="number" id="density" required placeholder="Bijvoorbeeld: 7850 voor staal">
+
+                <label for="radius">Straal van de gyroscoop (m):</label>
+                <input type="number" id="radius" required placeholder="Bijvoorbeeld: 0.5 voor een halve meter">
+
+                <label for="depth">Diepte van de gyroscoop (m):</label>
+                <input type="number" id="depth" required placeholder="Bijvoorbeeld: 0.2 voor 20 cm">
+            </fieldset>
+
+            <fieldset>
+                <legend>Uitsnijdingen</legend>
+                <label for="cutaway-radius">Straal van de uitsnijdingen (m):</label>
+                <input type="number" id="cutaway-radius" placeholder="Bijvoorbeeld: 0.1 voor 10 cm">
+
+                <label for="cutaway-depth">Diepte van de uitsnijdingen (m):</label>
+                <input type="number" id="cutaway-depth" placeholder="Bijvoorbeeld: 0.05 voor 5 cm">
+
+                <label for="num-cutaways">Aantal uitsnijdingen:</label>
+                <input type="number" id="num-cutaways" placeholder="Bijvoorbeeld: 4">
+            </fieldset>
+
+            <fieldset>
+                <legend>Snelheid van de gyroscoop</legend>
+                <label for="rpm">Aantal omwentelingen per minuut (RPM):</label>
+                <input type="number" id="rpm" placeholder="Bijvoorbeeld: 3000">
+
+                <label for="time-seconds">Tijd in seconden:</label>
+                <input type="number" id="time-seconds" placeholder="Bijvoorbeeld: 10">
+            </fieldset>
+
+            <button type="button" onclick="berekenGyroscoop()">Berekenen</button>
+        </form>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function berekenGyroscoop() {
+            // Pi
+            const PI = 3.14159265358979;
+
+            // Basisgegevens
+            const dichtheid = parseFloat(document.getElementById("density").value);
+            const straal = parseFloat(document.getElementById("radius").value);
+            const diepte = parseFloat(document.getElementById("depth").value);
+
+            // Uitsnijdingen
+            const uitsnijdingStraal = parseFloat(document.getElementById("cutaway-radius").value || 0);
+            const uitsnijdingDiepte = parseFloat(document.getElementById("cutaway-depth").value || 0);
+            const aantalUitsnijdingen = parseInt(document.getElementById("num-cutaways").value || 0);
+
+            // Snelheid
+            const rpm = parseFloat(document.getElementById("rpm").value || 0);
+            const tijdSeconden = parseFloat(document.getElementById("time-seconds").value || 0);
+
+            if (isNaN(dichtheid) || isNaN(straal) || isNaN(diepte)) {
+                alert("Vul alle verplichte velden in.");
+                return;
+            }
+
+            // Berekeningen voor volume en massa
+            const basisVolume = PI * Math.pow(straal, 2) * diepte;
+            const basisMassa = dichtheid * basisVolume;
+
+            const uitsnijdingVolume = aantalUitsnijdingen * (PI * Math.pow(uitsnijdingStraal, 2) * uitsnijdingDiepte);
+            const uitsnijdingMassa = uitsnijdingVolume * dichtheid;
+
+            const eindVolume = basisVolume - uitsnijdingVolume;
+            const eindMassa = basisMassa - uitsnijdingMassa;
+
+            // Traagheidsmoment berekenen
+            const basisTraagheid = (basisMassa * Math.pow(straal, 2)) / 2;
+            const uitsnijdingTraagheid = (uitsnijdingMassa * Math.pow(uitsnijdingStraal, 2)) / 2;
+            const eindTraagheid = basisTraagheid - uitsnijdingTraagheid;
+
+            // Snelheidsberekeningen
+            const rps = rpm / 60;
+            const hoeksnelheid = rps * (2 * PI);
+            const omtrek = 2 * PI * straal;
+            const snelheidKMU = ((rpm * omtrek) / 1000) * 60;
+
+            // Aanvullende snelheid
+            const gradenPerSeconde = (rpm * 360) / 60;
+            const radialenVerandering = (gradenPerSeconde / 360) * (2 * PI);
+            const omwentelingenPerSeconde = gradenPerSeconde / 360;
+
+            // Resultaten tonen
+            const resultaten = `
+                <h3>Resultaten</h3>
+                <p><strong>Basisvolume:</strong> ${basisVolume.toFixed(2)} m³</p>
+                <p><strong>Basismassa:</strong> ${basisMassa.toFixed(2)} kg</p>
+                <p><strong>Volume na uitsnijdingen:</strong> ${eindVolume.toFixed(2)} m³</p>
+                <p><strong>Massa na uitsnijdingen:</strong> ${eindMassa.toFixed(2)} kg</p>
+                <p><strong>Traagheidsmoment (basis):</strong> ${basisTraagheid.toFixed(2)} kg·m²</p>
+                <p><strong>Traagheidsmoment (na uitsnijdingen):</strong> ${eindTraagheid.toFixed(2)} kg·m²</p>
+                <p><strong>Hoeksnelheid:</strong> ${hoeksnelheid.toFixed(2)} rad/s</p>
+                <p><strong>Snelheid:</strong> ${snelheidKMU.toFixed(2)} km/u</p>
+                <p><strong>Graden per seconde:</strong> ${gradenPerSeconde.toFixed(2)}°/s</p>
+                <p><strong>Radiale verandering:</strong> ${radialenVerandering.toFixed(4)} rad</p>
+            `;
+            document.getElementById("results").innerHTML = resultaten;
+        }
+    </script>
+</body>
+</html>
